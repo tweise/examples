@@ -1,23 +1,20 @@
-/**
- * Copyright (c) 2015 DataTorrent, Inc.
- * All rights reserved.
- */
 package com.example.myapexapp;
 
 import org.apache.apex.malhar.lib.wal.FSWindowDataManager;
 import org.apache.hadoop.conf.Configuration;
 
+import com.example.myapexapp.ExactlyOnceJdbcOutputApp.KafkaSinglePortStringInputOperator;
+
 import com.datatorrent.api.Context;
 import com.datatorrent.api.DAG;
 import com.datatorrent.api.StreamingApplication;
 import com.datatorrent.api.annotation.ApplicationAnnotation;
-import com.datatorrent.contrib.kafka.KafkaSinglePortStringInputOperator;
 import com.datatorrent.lib.io.ConsoleOutputOperator;
 import com.datatorrent.lib.io.fs.AbstractFileOutputOperator;
 import com.datatorrent.lib.util.KeyValPair;
 
-@ApplicationAnnotation(name = "AtomicFileOutput")
-public class AtomicFileOutputApp implements StreamingApplication
+@ApplicationAnnotation(name = "ExactlyOnceFileOutput")
+public class ExactlyOnceFileOutputApp implements StreamingApplication
 {
   @Override
   public void populateDAG(DAG dag, Configuration configuration)
@@ -26,7 +23,8 @@ public class AtomicFileOutputApp implements StreamingApplication
         new KafkaSinglePortStringInputOperator());
     kafkaInput.setWindowDataManager(new FSWindowDataManager());
 
-    Application.UniqueCounterFlat count = dag.addOperator("count", new Application.UniqueCounterFlat());
+    ExactlyOnceJdbcOutputApp.UniqueCounterFlat count = dag.addOperator("count",
+        new ExactlyOnceJdbcOutputApp.UniqueCounterFlat());
 
     FileWriter fileWriter = dag.addOperator("fileWriter", new FileWriter());
 

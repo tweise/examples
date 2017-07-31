@@ -6,12 +6,13 @@ package com.example.myapexapp;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.lang.mutable.MutableInt;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 import com.datatorrent.api.annotation.ApplicationAnnotation;
-import com.datatorrent.contrib.kafka.KafkaSinglePortStringInputOperator;
 import com.datatorrent.api.StreamingApplication;
 import com.datatorrent.api.DAG;
 import com.datatorrent.api.DefaultOutputPort;
@@ -19,11 +20,15 @@ import com.datatorrent.lib.algo.UniqueCounter;
 import com.datatorrent.lib.db.jdbc.AbstractJdbcTransactionableOutputOperator;
 import com.datatorrent.lib.db.jdbc.JdbcTransactionalStore;
 import com.datatorrent.lib.io.ConsoleOutputOperator;
+
+import org.apache.apex.malhar.kafka.AbstractKafkaConsumer;
+import org.apache.apex.malhar.kafka.AbstractKafkaInputOperator;
+import org.apache.apex.malhar.kafka.KafkaConsumer09;
 import org.apache.apex.malhar.lib.wal.FSWindowDataManager;
 import com.datatorrent.lib.util.KeyValPair;
 
-@ApplicationAnnotation(name="ExactlyOnceExampleApplication")
-public class Application implements StreamingApplication
+@ApplicationAnnotation(name="ExactlyOnceJbdcOutput")
+public class ExactlyOnceJdbcOutputApp implements StreamingApplication
 {
 
   @Override
@@ -72,6 +77,23 @@ public class Application implements StreamingApplication
         counts.emit(new KeyValPair<>(e.getKey(), e.getValue().toInteger()));
       }
       map.clear();
+    }
+  }
+
+  public static class KafkaSinglePortStringInputOperator extends AbstractKafkaInputOperator
+  {
+    public final transient DefaultOutputPort<String> outputPort = new DefaultOutputPort<>();
+
+    @Override
+    public AbstractKafkaConsumer createConsumer(Properties properties)
+    {
+      return new KafkaConsumer09(properties);
+    }
+
+    @Override
+    protected void emitTuple(String cluster, ConsumerRecord<byte[], byte[]> message)
+    {
+      outputPort.emit(new String(message.value()));
     }
   }
 
